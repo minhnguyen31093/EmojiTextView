@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">EmojiTextViewSample</string>
+    <string name="submit">Submit</string>
+    <string name="noti">Show Emoji Notification</string>
+</resources>

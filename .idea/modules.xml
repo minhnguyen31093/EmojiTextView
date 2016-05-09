@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/EmojiTextView.iml" filepath="$PROJECT_DIR$/EmojiTextView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/emoji-text-view/emoji-text-view.iml" filepath="$PROJECT_DIR$/emoji-text-view/emoji-text-view.iml" />
+      <module fileurl="file://$PROJECT_DIR$/emoji-text-view-sample/emoji-text-view-sample.iml" filepath="$PROJECT_DIR$/emoji-text-view-sample/emoji-text-view-sample.iml" />
+    </modules>
+  </component>
+</project>
