@@ -1,18 +1,17 @@
 package com.github.minhnguyen31093.emojitextview;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 
 /**
  * Created by Minh. Nguyen Le on 3/4/2016.
  */
 final class UrlDrawable extends Drawable implements Drawable.Callback {
 
-    private GlideDrawable mDrawable;
+    private Drawable mDrawable;
 
     @Override
     public void draw(Canvas canvas) {
@@ -35,6 +34,7 @@ final class UrlDrawable extends Drawable implements Drawable.Callback {
         }
     }
 
+    @SuppressLint("WrongConstant")
     @Override
     public int getOpacity() {
         if (mDrawable != null) {
@@ -43,7 +43,7 @@ final class UrlDrawable extends Drawable implements Drawable.Callback {
         return 0;
     }
 
-    public void setDrawable(GlideDrawable drawable) {
+    public void setDrawable(Drawable drawable) {
         if (this.mDrawable != null) {
             this.mDrawable.setCallback(null);
         }

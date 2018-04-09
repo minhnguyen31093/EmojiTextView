@@ -2,7 +2,10 @@ package com.github.minhnguyen31093.emojitextview;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -10,14 +13,9 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.Request;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.ViewTarget;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 /**
  * Created by Minh. Nguyen Le on 3/4/2016.
@@ -28,29 +26,14 @@ public class GlideImageGetter implements Html.ImageGetter, Drawable.Callback {
 
     private final TextView mTextView;
 
-    private final Set<ImageGetterViewTarget> mTargets;
-
     public static GlideImageGetter get(View view) {
-        return (GlideImageGetter)view.getTag();
-    }
-
-    public void clear() {
-        if (mTextView != null) {
-            GlideImageGetter prev = get(mTextView);
-            if (prev == null) return;
-
-            for (ImageGetterViewTarget target : prev.mTargets) {
-                Glide.clear(target);
-            }
-        }
+        return (GlideImageGetter) view.getTag();
     }
 
     public GlideImageGetter(Context context, TextView textView) {
         this.mContext = context;
         this.mTextView = textView;
 
-        clear();
-        mTargets = new HashSet<>();
         if (mTextView != null) {
             mTextView.setTag(this);
         }
@@ -62,9 +45,36 @@ public class GlideImageGetter implements Html.ImageGetter, Drawable.Callback {
         final UrlDrawable urlDrawable = new UrlDrawable();
         System.out.println("Downloading from: " + url);
         if (mTextView != null) {
-            Glide.with(mContext).load(id)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(new ImageGetterViewTarget(mTextView, urlDrawable));
+            Glide.with(mContext).load(id).into(new SimpleTarget<Drawable>() {
+                @Override
+                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                    Rect rect;
+
+                    DisplayMetrics metrics = new DisplayMetrics();
+                    ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
+                    float dpi = (int) metrics.density;
+                    int width = (int) (resource.getIntrinsicWidth() * dpi);
+                    int height = (int) (resource.getIntrinsicHeight() * dpi);
+                    if (height < mTextView.getLineHeight()) {
+                        width = width * mTextView.getLineHeight() / height;
+                        height = mTextView.getLineHeight();
+                    }
+                    rect = new Rect(0, 0, width, height);
+                    resource.setBounds(rect);
+
+                    urlDrawable.setBounds(rect);
+                    urlDrawable.setDrawable(resource);
+
+                    if (resource instanceof Animatable) {
+                        Animatable animatable = (Animatable) resource;
+                        urlDrawable.setCallback(get(mTextView));
+                        animatable.start();
+                    }
+
+                    mTextView.setText(mTextView.getText());
+                    mTextView.invalidate();
+                }
+            });
         }
         return urlDrawable;
 
@@ -87,18 +97,18 @@ public class GlideImageGetter implements Html.ImageGetter, Drawable.Callback {
 
     }
 
-    private class ImageGetterViewTarget extends ViewTarget<TextView, GlideDrawable> {
+    public class GifTarget extends SimpleTarget<GifDrawable> {
 
+        private final TextView textView;
         private final UrlDrawable mDrawable;
 
-        private ImageGetterViewTarget(TextView view, UrlDrawable drawable) {
-            super(view);
-            mTargets.add(this);
+        private GifTarget(TextView textView, UrlDrawable drawable) {
+            this.textView = textView;
             this.mDrawable = drawable;
         }
 
         @Override
-        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+        public void onResourceReady(@NonNull GifDrawable resource, @Nullable Transition<? super GifDrawable> transition) {
             Rect rect;
 
             DisplayMetrics metrics = new DisplayMetrics();
@@ -106,9 +116,9 @@ public class GlideImageGetter implements Html.ImageGetter, Drawable.Callback {
             float dpi = (int) metrics.density;
             int width = (int) (resource.getIntrinsicWidth() * dpi);
             int height = (int) (resource.getIntrinsicHeight() * dpi);
-            if (height < getView().getLineHeight()) {
-                width = width * getView().getLineHeight() / height;
-                height = getView().getLineHeight();
+            if (height < textView.getLineHeight()) {
+                width = width * textView.getLineHeight() / height;
+                height = textView.getLineHeight();
             }
             rect = new Rect(0, 0, width, height);
             resource.setBounds(rect);
@@ -116,26 +126,14 @@ public class GlideImageGetter implements Html.ImageGetter, Drawable.Callback {
             mDrawable.setBounds(rect);
             mDrawable.setDrawable(resource);
 
-
-            if (resource.isAnimated()) {
-                mDrawable.setCallback(get(getView()));
-                resource.setLoopCount(GlideDrawable.LOOP_FOREVER);
-                resource.start();
+            Animatable animatable = (Animatable) resource;
+            if (animatable.isRunning()) {
+                mDrawable.setCallback(get(textView));
+                animatable.start();
             }
 
-            getView().setText(getView().getText());
-            getView().invalidate();
-        }
-
-        private Request request;
-        @Override
-        public Request getRequest() {
-            return request;
-        }
-
-        @Override
-        public void setRequest(Request request) {
-            this.request = request;
+            textView.setText(textView.getText());
+            textView.invalidate();
         }
     }
 }
